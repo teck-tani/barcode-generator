@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>무료 바코드 생성기 | QR 코드 만들기</title>
+    <meta name="description" content="무료 바코드 및 QR 코드 생성기. CODE128, EAN, UPC 지원. 온라인에서 바코드와 QR 코드를 쉽게 만들고 다운로드하세요.">
+    <meta name="keywords" content="바코드 생성기, QR 코드 생성기, 무료 바코드, 바코드 만들기, QR 코드 만들기, CODE128, EAN, UPC">
+    <meta name="author" content="Barcode Generator">
+    <meta property="og:title" content="무료 바코드 생성기 | QR 코드 만들기">
+    <meta property="og:description" content="무료 바코드 및 QR 코드 생성기. CODE128, EAN, UPC 지원. 온라인에서 바코드와 QR 코드를 쉽게 만들고 다운로드하세요.">
+    <meta property="og:type" content="website">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+        }
+        .barcode-container {
+            flex: 2;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            position: relative;
+        }
+        .controls-container {
+            flex: 1;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .barcode-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin-top: 20px;
+            padding: 30px;
+        }
+        .barcode-item {
+            border: 1px solid #ddd;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: move;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+        .barcode-item.dragging {
+            opacity: 0.7;
+            background-color: #e3f2fd;
+            border: 2px solid #2196F3;
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .barcode-item.drag-over {
+            background-color: #f5f5f5;
+            transform: translateY(5px);
+        }
+        .barcode-item svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .barcode-number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+        .barcode-value {
+            margin-top: 5px;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .remove-barcode {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 5px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+        .remove-barcode:hover {
+            background: #cc0000;
+        }
+        .print-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #2196F3;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        .print-button:hover {
+            background-color: #1976D2;
+            transform: scale(1.1);
+        }
+        @media print {
+            .print-button {
+                display: none;
+            }
+            .controls-container {
+                display: none;
+            }
+            .barcode-container {
+                border: none;
+                padding: 0;
+            }
+            .barcode-item {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls-container">
+            <h1>바코드 생성기</h1>
+            <div class="input-group">
+                <label for="barcodeType">바코드 형식:</label>
+                <select id="barcodeType">
+                    <option value="CODE128">CODE128</option>
+                    <option value="EAN">EAN</option>
+                    <option value="EAN8">EAN8</option>
+                    <option value="UPC">UPC</option>
+                    <option value="CODE39">CODE39</option>
+                    <option value="ITF14">ITF14</option>
+                    <option value="ITF">ITF</option>
+                    <option value="MSI">MSI</option>
+                    <option value="MSI10">MSI10</option>
+                    <option value="MSI11">MSI11</option>
+                    <option value="MSI1010">MSI1010</option>
+                    <option value="MSI1110">MSI1110</option>
+                    <option value="Pharmacode">Pharmacode</option>
+                    <option value="QRCode">QR 코드</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="barcodeValue">바코드 값:</label>
+                <input type="text" id="barcodeValue" placeholder="바코드 값을 입력하세요">
+            </div>
+            <div class="input-group">
+                <label for="excelData">엑셀 데이터 붙여넣기 (한 줄에 하나씩):</label>
+                <textarea id="excelData" placeholder="엑셀에서 복사한 데이터를 여기에 붙여넣으세요..."></textarea>
+                <button onclick="generateFromExcel()">엑셀 데이터로 바코드 생성</button>
+            </div>
+            <button onclick="addBarcode()">바코드 추가</button>
+            <button onclick="clearAll()">모두 지우기</button>
+            <div id="error" class="error"></div>
+        </div>
+        <div class="barcode-container">
+            <button class="print-button" onclick="printBarcodes()" title="Print Barcodes">🖨️</button>
+            <div class="barcode-grid" id="barcodeGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        let barcodeCount = 0;
+        const maxBarcodes = 50;
+
+        function generateBarcode(value, type, container) {
+            try {
+                JsBarcode(container, value, {
+                    format: type,
+                    width: 2.5,
+                    height: 80,
+                    displayValue: false,
+                    fontSize: 14,
+                    margin: 15
+                });
+            } catch (error) {
+                document.getElementById('error').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function addBarcode() {
+            const type = document.getElementById('barcodeType').value;
+            const value = document.getElementById('barcodeValue').value;
+            const errorDiv = document.getElementById('error');
+            const barcodeInput = document.getElementById('barcodeValue');
+            
+            if (!value) {
+                errorDiv.textContent = '바코드 값을 입력해주세요';
+                return;
+            }
+
+            if (barcodeCount >= maxBarcodes) {
+                errorDiv.textContent = `최대 바코드 개수 (${maxBarcodes}개)에 도달했습니다`;
+                return;
+            }
+
+            errorDiv.textContent = '';
+            barcodeCount++;
+
+            const grid = document.getElementById('barcodeGrid');
+            const barcodeItem = document.createElement('div');
+            barcodeItem.className = 'barcode-item';
+            barcodeItem.draggable = true;
+            
+            // Add drag event listeners
+            barcodeItem.addEventListener('dragstart', handleDragStart);
+            barcodeItem.addEventListener('dragend', handleDragEnd);
+            barcodeItem.addEventListener('dragover', handleDragOver);
+            barcodeItem.addEventListener('drop', handleDrop);
+            
+            const barcodeNumber = document.createElement('div');
+            barcodeNumber.className = 'barcode-number';
+            barcodeNumber.textContent = barcodeCount;
+            
+            const removeButton = document.createElement('button');
+            removeButton.className = 'remove-barcode';
+            removeButton.textContent = '×';
+            removeButton.onclick = function() {
+                barcodeItem.remove();
+                barcodeCount--;
+                updateBarcodeNumbers();
+            };
+            
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            const barcodeValue = document.createElement('div');
+            barcodeValue.className = 'barcode-value';
+            barcodeValue.textContent = value;
+
+            barcodeItem.appendChild(barcodeNumber);
+            barcodeItem.appendChild(removeButton);
+            barcodeItem.appendChild(svg);
+            barcodeItem.appendChild(barcodeValue);
+            grid.appendChild(barcodeItem);
+
+            generateBarcode(value, type, svg);
+            barcodeInput.value = '';
+            barcodeInput.focus();
+        }
+
+        // Drag and Drop functions
+        function handleDragStart(e) {
+            this.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', this.dataset.index);
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            
+            const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+            const toIndex = Array.from(this.parentNode.children).indexOf(this);
+            
+            if (fromIndex !== toIndex) {
+                const grid = document.getElementById('barcodeGrid');
+                const items = Array.from(grid.children);
+                const [movedItem] = items.splice(fromIndex, 1);
+                items.splice(toIndex, 0, movedItem);
+                
+                // Reorder items in the DOM
+                items.forEach(item => grid.appendChild(item));
+                
+                // Update numbers
+                updateBarcodeNumbers();
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('barcodeGrid').innerHTML = '';
+            barcodeCount = 0;
+            document.getElementById('error').textContent = '';
+        }
+
+        function updateBarcodeNumbers() {
+            const items = document.querySelectorAll('.barcode-item');
+            items.forEach((item, index) => {
+                item.querySelector('.barcode-number').textContent = index + 1;
+            });
+        }
+
+        function generateFromExcel() {
+            const excelData = document.getElementById('excelData').value;
+            const type = document.getElementById('barcodeType').value;
+            const errorDiv = document.getElementById('error');
+            
+            if (!excelData) {
+                errorDiv.textContent = '데이터를 붙여넣어주세요';
+                return;
+            }
+
+            // Split the data by newlines and filter out empty lines
+            const values = excelData.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+
+            if (values.length === 0) {
+                errorDiv.textContent = '유효한 데이터가 없습니다';
+                return;
+            }
+
+            // Clear existing barcodes
+            clearAll();
+
+            // Generate barcodes for each value
+            values.forEach(value => {
+                if (barcodeCount >= maxBarcodes) {
+                    errorDiv.textContent = `최대 바코드 개수 (${maxBarcodes}개)에 도달했습니다`;
+                    return;
+                }
+
+                const grid = document.getElementById('barcodeGrid');
+                const barcodeItem = document.createElement('div');
+                barcodeItem.className = 'barcode-item';
+                barcodeItem.draggable = true;
+                
+                // Add drag event listeners
+                barcodeItem.addEventListener('dragstart', handleDragStart);
+                barcodeItem.addEventListener('dragend', handleDragEnd);
+                barcodeItem.addEventListener('dragover', handleDragOver);
+                barcodeItem.addEventListener('drop', handleDrop);
+                
+                const barcodeNumber = document.createElement('div');
+                barcodeNumber.className = 'barcode-number';
+                barcodeNumber.textContent = barcodeCount + 1;
+                
+                const removeButton = document.createElement('button');
+                removeButton.className = 'remove-barcode';
+                removeButton.textContent = '×';
+                removeButton.onclick = function() {
+                    barcodeItem.remove();
+                    barcodeCount--;
+                    updateBarcodeNumbers();
+                };
+                
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                const barcodeValue = document.createElement('div');
+                barcodeValue.className = 'barcode-value';
+                barcodeValue.textContent = value;
+
+                barcodeItem.appendChild(barcodeNumber);
+                barcodeItem.appendChild(removeButton);
+                barcodeItem.appendChild(svg);
+                barcodeItem.appendChild(barcodeValue);
+                grid.appendChild(barcodeItem);
+
+                generateBarcode(value, type, svg);
+                barcodeCount++;
+            });
+
+            // Clear the textarea
+            document.getElementById('excelData').value = '';
+        }
+
+        // Add paste event listener for the textarea
+        document.getElementById('excelData').addEventListener('paste', function(e) {
+            // Let the paste event complete first
+            setTimeout(() => {
+                // Remove any carriage returns and extra spaces
+                this.value = this.value.replace(/\r/g, '')
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0)
+                    .join('\n');
+            }, 0);
+        });
+
+        // Add barcode when Enter key is pressed
+        document.getElementById('barcodeValue').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addBarcode();
+            }
+        });
+
+        function printBarcodes() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
