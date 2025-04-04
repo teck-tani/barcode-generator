@@ -225,7 +225,6 @@
                     <option value="MSI1010">MSI1010</option>
                     <option value="MSI1110">MSI1110</option>
                     <option value="Pharmacode">Pharmacode</option>
-                    <option value="QRCode">QR 코드</option>
                 </select>
             </div>
             <div class="input-group">
@@ -253,14 +252,46 @@
 
         function generateBarcode(value, type, container) {
             try {
-                JsBarcode(container, value, {
-                    format: type,
+                let options = {
                     width: 2.5,
                     height: 80,
-                    displayValue: false,
-                    fontSize: 14,
+                    displayValue: true,
+                    fontSize: 16,
                     margin: 15
-                });
+                };
+
+                // Add specific options for different barcode types
+                switch(type) {
+                    case 'EAN':
+                        options.format = 'EAN13';
+                        options.flat = true;
+                        break;
+                    case 'EAN8':
+                        options.format = 'EAN8';
+                        options.flat = true;
+                        break;
+                    case 'UPC':
+                        options.format = 'UPC';
+                        options.flat = true;
+                        break;
+                    case 'CODE39':
+                        options.flat = true;
+                        break;
+                    case 'ITF14':
+                    case 'ITF':
+                        options.flat = true;
+                        break;
+                    case 'MSI':
+                    case 'MSI10':
+                    case 'MSI11':
+                    case 'MSI1010':
+                    case 'MSI1110':
+                        break;
+                    case 'Pharmacode':
+                        break;
+                }
+
+                JsBarcode(container, value, options);
             } catch (error) {
                 document.getElementById('error').textContent = `Error: ${error.message}`;
             }
@@ -268,13 +299,34 @@
 
         function addBarcode() {
             const type = document.getElementById('barcodeType').value;
-            const value = document.getElementById('barcodeValue').value;
+            let value = document.getElementById('barcodeValue').value;
             const errorDiv = document.getElementById('error');
             const barcodeInput = document.getElementById('barcodeValue');
             
             if (!value) {
                 errorDiv.textContent = '바코드 값을 입력해주세요';
                 return;
+            }
+
+            // Validate barcode format
+            if (type === 'EAN' || type === 'EAN8') {
+                const numericValue = value.replace(/\D/g, '');
+                if (type === 'EAN' && (numericValue.length !== 12 && numericValue.length !== 13)) {
+                    errorDiv.textContent = 'EAN 바코드는 12자리 또는 13자리 숫자여야 합니다';
+                    return;
+                }
+                if (type === 'EAN8' && (numericValue.length !== 7 && numericValue.length !== 8)) {
+                    errorDiv.textContent = 'EAN-8 바코드는 7자리 또는 8자리 숫자여야 합니다';
+                    return;
+                }
+                value = numericValue;
+            } else if (type === 'UPC') {
+                const numericValue = value.replace(/\D/g, '');
+                if (numericValue.length !== 11 && numericValue.length !== 12) {
+                    errorDiv.textContent = 'UPC 바코드는 11자리 또는 12자리 숫자여야 합니다';
+                    return;
+                }
+                value = numericValue;
             }
 
             if (barcodeCount >= maxBarcodes) {
@@ -312,7 +364,7 @@
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             const barcodeValue = document.createElement('div');
             barcodeValue.className = 'barcode-value';
-            barcodeValue.textContent = value;
+            barcodeValue.textContent = '';
 
             barcodeItem.appendChild(barcodeNumber);
             barcodeItem.appendChild(removeButton);
@@ -431,7 +483,7 @@
                 const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 const barcodeValue = document.createElement('div');
                 barcodeValue.className = 'barcode-value';
-                barcodeValue.textContent = value;
+                barcodeValue.textContent = '';
 
                 barcodeItem.appendChild(barcodeNumber);
                 barcodeItem.appendChild(removeButton);
