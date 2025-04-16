@@ -93,11 +93,13 @@ function addBarcode() {
     const barcodeItem = document.createElement('div');
     barcodeItem.className = 'barcode-item';
     barcodeItem.draggable = true;
+    barcodeItem.dataset.index = barcodeCount - 1;
     
     // Add drag event listeners
     barcodeItem.addEventListener('dragstart', handleDragStart);
     barcodeItem.addEventListener('dragend', handleDragEnd);
     barcodeItem.addEventListener('dragover', handleDragOver);
+    barcodeItem.addEventListener('dragleave', handleDragLeave);
     barcodeItem.addEventListener('drop', handleDrop);
     
     const barcodeNumber = document.createElement('div');
@@ -131,38 +133,109 @@ function addBarcode() {
 
 // Drag and Drop functions
 function handleDragStart(e) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.getAttribute('data-index'));
     this.classList.add('dragging');
-    e.dataTransfer.setData('text/plain', this.dataset.index);
 }
 
 function handleDragEnd(e) {
     this.classList.remove('dragging');
+    document.querySelectorAll('.barcode-item').forEach(item => {
+        item.classList.remove('drag-over');
+        item.classList.remove('dragging');
+    });
 }
 
 function handleDragOver(e) {
-    e.preventDefault();
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'move';
     this.classList.add('drag-over');
+    return false;
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
 }
 
 function handleDrop(e) {
+    e.stopPropagation();
     e.preventDefault();
     this.classList.remove('drag-over');
     
-    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-    const toIndex = Array.from(this.parentNode.children).indexOf(this);
+    const draggedItemIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    const dropTargetIndex = parseInt(this.getAttribute('data-index'));
     
-    if (fromIndex !== toIndex) {
-        const grid = document.getElementById('barcodeGrid');
-        const items = Array.from(grid.children);
-        const [movedItem] = items.splice(fromIndex, 1);
-        items.splice(toIndex, 0, movedItem);
-        
-        // Reorder items in the DOM
-        items.forEach(item => grid.appendChild(item));
-        
-        // Update numbers
-        updateBarcodeNumbers();
+    if (draggedItemIndex === dropTargetIndex) {
+        return;
     }
+    
+    // Remove any lingering drag classes
+    document.querySelectorAll('.barcode-item').forEach(item => {
+        item.classList.remove('drag-over');
+        item.classList.remove('dragging');
+    });
+    
+    // Get all barcode items
+    const barcodeItems = Array.from(document.querySelectorAll('.barcode-item'));
+    const draggedItem = barcodeItems.find(item => parseInt(item.getAttribute('data-index')) === draggedItemIndex);
+    const dropTarget = barcodeItems.find(item => parseInt(item.getAttribute('data-index')) === dropTargetIndex);
+    
+    if (!draggedItem || !dropTarget) {
+        return;
+    }
+    
+    // Get the parent element
+    const grid = document.getElementById('barcodeGrid');
+    
+    // Clone the grid to avoid reference issues
+    const gridClone = grid.cloneNode(false);
+    
+    // Create new ordered array with swapped positions
+    const newOrder = [...barcodeItems];
+    const draggedItemPosition = newOrder.indexOf(draggedItem);
+    const dropTargetPosition = newOrder.indexOf(dropTarget);
+    
+    // Swap positions in the array
+    [newOrder[draggedItemPosition], newOrder[dropTargetPosition]] = 
+    [newOrder[dropTargetPosition], newOrder[draggedItemPosition]];
+    
+    // Append items in the new order
+    newOrder.forEach((item, index) => {
+        const clonedItem = item.cloneNode(true);
+        clonedItem.setAttribute('data-index', index);
+        
+        // Remove any drag classes from cloned item
+        clonedItem.classList.remove('drag-over');
+        clonedItem.classList.remove('dragging');
+        
+        // Re-add event listeners to the cloned item
+        clonedItem.addEventListener('dragstart', handleDragStart);
+        clonedItem.addEventListener('dragend', handleDragEnd);
+        clonedItem.addEventListener('dragover', handleDragOver);
+        clonedItem.addEventListener('dragleave', handleDragLeave);
+        clonedItem.addEventListener('drop', handleDrop);
+        
+        // Re-add remove button functionality
+        const removeButton = clonedItem.querySelector('.remove-barcode');
+        if (removeButton) {
+            removeButton.onclick = function() {
+                clonedItem.remove();
+                barcodeCount--;
+                updateBarcodeNumbers();
+            };
+        }
+        
+        gridClone.appendChild(clonedItem);
+    });
+    
+    // Replace the old grid with the new one
+    grid.parentNode.replaceChild(gridClone, grid);
+    
+    // Update barcode numbers
+    updateBarcodeNumbers();
+    return false;
 }
 
 function clearAll() {
@@ -212,11 +285,13 @@ function generateFromExcel() {
         const barcodeItem = document.createElement('div');
         barcodeItem.className = 'barcode-item';
         barcodeItem.draggable = true;
+        barcodeItem.dataset.index = barcodeCount - 1;
         
         // Add drag event listeners
         barcodeItem.addEventListener('dragstart', handleDragStart);
         barcodeItem.addEventListener('dragend', handleDragEnd);
         barcodeItem.addEventListener('dragover', handleDragOver);
+        barcodeItem.addEventListener('dragleave', handleDragLeave);
         barcodeItem.addEventListener('drop', handleDrop);
         
         const barcodeNumber = document.createElement('div');

@@ -102,8 +102,11 @@ button:hover {
 }
 
 .barcode-item.drag-over {
-    background-color: #f5f5f5;
-    transform: translateY(5px);
+    background-color: #bbdefb;
+    border: 2px dashed #1976D2;
+    transform: translateY(2px);
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.6);
+    transition: all 0.3s ease;
 }
 
 .barcode-item svg {
