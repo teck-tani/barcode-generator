@@ -1,0 +1,184 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    gap: 20px;
+}
+
+.barcode-container {
+    flex: 2;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    position: relative;
+}
+
+.controls-container {
+    flex: 1;
+    padding: 20px;
+    border-right: 1px solid #ddd;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+select, input, textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+textarea {
+    height: 100px;
+    resize: vertical;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.error {
+    color: red;
+    margin-top: 10px;
+}
+
+.barcode-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+    margin-top: 20px;
+    padding: 30px;
+}
+
+.barcode-item {
+    border: 1px solid #ddd;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: move;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.barcode-item.dragging {
+    opacity: 0.7;
+    background-color: #e3f2fd;
+    border: 2px solid #2196F3;
+    transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.barcode-item.drag-over {
+    background-color: #f5f5f5;
+    transform: translateY(5px);
+}
+
+.barcode-item svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.barcode-number {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-size: 12px;
+    color: #666;
+}
+
+.barcode-value {
+    margin-top: 5px;
+    font-size: 12px;
+    word-break: break-all;
+}
+
+.remove-barcode {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 2px 5px;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.remove-barcode:hover {
+    background: #cc0000;
+}
+
+.print-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #2196F3;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+.print-button:hover {
+    background-color: #1976D2;
+    transform: scale(1.1);
+}
+
+@media print {
+    .print-button {
+        display: none;
+    }
+    .controls-container {
+        display: none;
+    }
+    .barcode-container {
+        border: none;
+        padding: 0;
+    }
+    .barcode-item {
+        break-inside: avoid;
+    }
+} 
